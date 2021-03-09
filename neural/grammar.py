@@ -114,6 +114,15 @@ class ShapeGridGrammar(Grammar):
 
         super().__init__(variables, productions, semantics)
         self.grid_size = grid_size
+    
+    def valid(self, program_vector):
+        program, shape, left, right, top, bottom, thickness, outside, inside, colour, a1, a2 = program_vector
+        return all([program_vector[i] < len(s) for i, s in enumerate(self.semantics)]) \
+                and left + 2 * thickness - 1 <= right and top + 2 * thickness - 1 <= bottom
+
+
+    def hash(self, program_vector):
+        return ''.join(map(str, program_vector))
 
 def draw(grammar, program_vector, name):
     L = grammar.grid_size
@@ -135,6 +144,17 @@ def draw(grammar, program_vector, name):
 
 if __name__ == "__main__":
     grammar = ShapeGridGrammar(7)
-    programs = grammar.sample(torch.ones((1, 7, 12))).detach().tolist()
-    print(programs)
-    draw(grammar, programs[0], 'refactored')
+    n_programs = 100
+    n_try = 100
+    i = 0
+    j = 0
+    while i < n_programs:
+        programs = grammar.sample(torch.ones((1, 7, 12))).detach().tolist()
+        j += 1
+        if grammar.valid(programs[0]):
+            i += 1
+            j = 0
+            print(grammar.hash(programs[0]))
+        elif j > n_try:
+            print("Max tries exceeded!")
+            break
